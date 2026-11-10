@@ -53,7 +53,7 @@ You need an AWS account, plus on your machine:
 Then:
 
 ```bash
-git clone <this repository> s3player
+git clone https://github.com/creativepartnership/s3player.git
 cd s3player
 scripts/setup.sh
 ```

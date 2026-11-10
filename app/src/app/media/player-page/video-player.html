@@ -1,0 +1,211 @@
+@if (src(); as url) {
+  <video
+    #video
+    class="absolute inset-0 h-full w-full object-contain"
+    [src]="url"
+    crossorigin="anonymous"
+    autoplay
+    playsinline
+    (click)="togglePlay(); reveal()"
+    (dblclick)="toggleFullscreen()"
+    (loadedmetadata)="onLoadedMetadata()"
+    (timeupdate)="onTimeUpdate()"
+    (progress)="onTimeUpdate()"
+    (play)="onPlay()"
+    (pause)="onPause()"
+    (ended)="onEnded()"
+    (waiting)="onVideoWaiting()"
+    (playing)="onVideoPlaying()"
+    (canplay)="buffering.set(false)"
+    (seeking)="syncAudio()"
+    (seeked)="syncAudio()"
+    (ratechange)="syncAudio()"
+    (volumechange)="onVolumeChange()"
+    (error)="onError()"
+  >
+    @for (track of subtitleTracks(); track track.key) {
+      @if (subtitleUrls()[track.key]; as trackUrl) {
+        <track kind="subtitles" [src]="trackUrl" [attr.srclang]="track.lang || null" [label]="track.label" [attr.data-key]="track.key" />
+      }
+    }
+  </video>
+}
+<!-- Another audio language, played in step with the muted video. -->
+<audio
+  #altAudio
+  preload="auto"
+  class="hidden"
+  (loadedmetadata)="syncAudio()"
+  (waiting)="onAudioWaiting()"
+  (canplay)="onAudioCanPlay()"
+  (volumechange)="onVolumeChange()"
+  (error)="onAudioError()"
+></audio>
+
+@if (error()) {
+  <div role="alert" class="absolute inset-0 flex flex-col items-center justify-center gap-4 p-6 text-center">
+    <p class="text-lg">{{ 'player.loadError' | t }}</p>
+    <a [routerLink]="backLink()" class="s3-btn s3-btn-glass">{{ 'nav.back' | t }}</a>
+  </div>
+} @else if (buffering()) {
+  <div class="pointer-events-none absolute inset-0 flex items-center justify-center" aria-hidden="true">
+    <span class="loading loading-spinner loading-lg text-white/80"></span>
+  </div>
+}
+
+<!-- Play/pause/seek confirmation: pops up and fades away. -->
+@if (flash(); as f) {
+  @for (id of [f.id]; track id) {
+    <div class="s3-flash" aria-hidden="true" (animationend)="flash.set(null)">
+      @switch (f.icon) {
+        @case ('pause') {
+          <svg width="44" height="44" viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor" /><rect x="14" y="5" width="4" height="14" rx="1" fill="currentColor" /></svg>
+        }
+        @case ('play') {
+          <s3-icon name="play" [size]="44" />
+        }
+        @default {
+          <span class="flex flex-col items-center leading-none">
+            <s3-icon name="restart" [size]="36" [stroke]="2" [class.-scale-x-100]="f.icon === 'forward'" />
+            <span class="mt-1 text-sm font-bold">10</span>
+          </span>
+        }
+      }
+    </div>
+  }
+}
+
+<!-- Top: back + what's playing -->
+<header class="s3-player-top">
+  <a [routerLink]="backLink()" class="s3-icon-button h-12! w-12!" [attr.aria-label]="'nav.back' | t">
+    <s3-icon name="back" [size]="22" [stroke]="2.2" />
+  </a>
+  <div class="flex min-w-0 flex-col">
+    <span class="font-display truncate text-xl font-bold sm:text-2xl">{{ title() }}</span>
+    @if (subtitle()) {
+      <span class="truncate text-sm text-white/75 sm:text-[15px]">{{ subtitle() }}</span>
+    }
+  </div>
+</header>
+
+<!-- Up next -->
+@if (showUpNext()) {
+  @if (nextEpisode(); as next) {
+    <aside class="s3-up-next" [attr.aria-label]="'player.upNext' | t">
+      <s3-art class="relative aspect-video w-[168px] flex-none rounded-xl max-sm:w-[112px]" [key]="next.details?.stillS3Key ?? next.thumbnailS3Key" [title]="nextLabel()" [showTitle]="false" />
+      <div class="flex min-w-0 flex-col gap-1.5">
+        <span class="text-xs font-bold tracking-wider text-primary uppercase">
+          @if (countdown() !== null) {
+            {{ 'player.nextIn' | t: { n: countdown()! } }}
+          } @else {
+            {{ 'player.upNext' | t }}
+          }
+        </span>
+        <span class="line-clamp-2 font-semibold">{{ nextLabel() }}</span>
+        <div class="mt-1 flex gap-2">
+          <button type="button" class="s3-btn s3-btn-primary h-10! px-4! text-sm!" (click)="playNext()">
+            <s3-icon name="play" [size]="15" />{{ 'action.playNow' | t }}
+          </button>
+          <button type="button" class="s3-btn s3-btn-glass h-10! px-4! text-sm!" (click)="dismissUpNext()">{{ 'action.cancel' | t }}</button>
+        </div>
+      </div>
+    </aside>
+  }
+}
+
+<!-- Bottom: seek bar and buttons -->
+<div class="s3-player-bar" (click)="$event.stopPropagation()">
+  <div class="flex items-center gap-4 text-sm tabular-nums">
+    <span>{{ clock(current()) }}</span>
+    <div class="s3-seek">
+      <div class="s3-seek-track"><div class="s3-seek-buffer" [style.width.%]="bufferedPercent()"></div><div class="s3-seek-fill" [style.width.%]="percent()"></div></div>
+      <input
+        type="range"
+        min="0"
+        [max]="duration() || 0"
+        step="1"
+        [value]="current()"
+        [attr.aria-label]="'player.seek' | t"
+        [attr.aria-valuetext]="clock(current()) + ' / ' + clock(duration())"
+        (input)="seekTo($event)"
+      />
+    </div>
+    <span>−{{ clock(duration() - current()) }}</span>
+  </div>
+
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <div class="flex items-center gap-2 sm:gap-3">
+      <button type="button" class="s3-player-btn" [attr.aria-label]="'player.back10' | t" (click)="seekBy(-10)">
+        <s3-icon name="restart" [size]="24" [stroke]="2" />
+      </button>
+      <button #playButton type="button" class="s3-player-btn is-main" [attr.aria-label]="(playing() ? 'player.pause' : 'action.play') | t" (click)="togglePlay()">
+        @if (playing()) {
+          <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor" /><rect x="14" y="5" width="4" height="14" rx="1" fill="currentColor" /></svg>
+        } @else {
+          <s3-icon name="play" [size]="26" />
+        }
+      </button>
+      <button type="button" class="s3-player-btn" [attr.aria-label]="'player.forward10' | t" (click)="seekBy(10)">
+        <s3-icon name="restart" [size]="24" [stroke]="2" class="-scale-x-100" />
+      </button>
+      @if (nextEpisode()) {
+        <button type="button" class="s3-player-btn" [attr.aria-label]="'player.nextEpisode' | t" [attr.title]="nextLabel()" (click)="playNext()">
+          <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5v14l9-7z" fill="currentColor" /><rect x="16" y="5" width="3" height="14" rx="1" fill="currentColor" /></svg>
+        </button>
+      }
+      <div class="group/vol hidden items-center gap-1 sm:flex">
+        <button type="button" class="s3-player-btn" [attr.aria-label]="(muted() ? 'player.unmute' : 'player.mute') | t" (click)="toggleMute()">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 9v6h4l5 4V5L8 9z" fill="currentColor" />
+            @if (muted() || volume() === 0) {
+              <path d="M17 9l5 6M22 9l-5 6" />
+            } @else {
+              <path d="M16.5 8.5a5 5 0 0 1 0 7" />
+            }
+          </svg>
+        </button>
+        <input type="range" min="0" max="1" step="0.05" class="s3-volume" [value]="muted() ? 0 : volume()" [attr.aria-label]="'player.volume' | t" (input)="setVolume($event)" />
+      </div>
+    </div>
+
+    <div class="relative flex items-center gap-2">
+      @if (subtitleTracks().length) {
+        <button type="button" class="s3-player-pill" aria-haspopup="menu" [attr.aria-expanded]="menu() === 'subtitles'" (click)="toggleMenu('subtitles')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2" /><path d="M7 12h3M14 12h3M7 15h10" stroke-linecap="round" /></svg>
+          <span class="max-sm:hidden">{{ 'player.subtitles' | t }}: {{ activeSubtitleLabel() }}</span>
+        </button>
+      }
+      @if (audioLanguages().length > 1) {
+        <button type="button" class="s3-player-pill" aria-haspopup="menu" [attr.aria-expanded]="menu() === 'audio'" (click)="toggleMenu('audio')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 10v4M8 7v10M12 4v16M16 7v10M20 10v4" stroke-linecap="round" /></svg>
+          <span class="max-sm:hidden">{{ 'player.audio' | t }}: {{ activeAudioLabel() }}</span>
+        </button>
+      }
+      <button type="button" class="s3-player-btn" [attr.aria-label]="(fullscreen() ? 'player.exitFullscreen' : 'player.fullscreen') | t" (click)="toggleFullscreen()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          @if (fullscreen()) {
+            <path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" />
+          } @else {
+            <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />
+          }
+        </svg>
+      </button>
+
+      @if (menu() === 'subtitles') {
+        <div class="s3-player-menu" role="menu" [attr.aria-label]="'player.subtitles' | t">
+          <button type="button" role="menuitemradio" [attr.aria-checked]="activeSubtitle() === null" (click)="chooseSubtitle(null)">{{ 'player.off' | t }}</button>
+          @for (track of subtitleTracks(); track track.key) {
+            <button type="button" role="menuitemradio" [attr.aria-checked]="activeSubtitle() === track.key" (click)="chooseSubtitle(track)">{{ track.label }}</button>
+          }
+        </div>
+      }
+      @if (menu() === 'audio') {
+        <div class="s3-player-menu" role="menu" [attr.aria-label]="'player.audio' | t">
+          @for (track of audioLanguages(); track track.key ?? '') {
+            <button type="button" role="menuitemradio" [attr.aria-checked]="activeAudio() === track.key" (click)="chooseAudio(track)">{{ track.label }}</button>
+          }
+        </div>
+      }
+    </div>
+  </div>
+</div>

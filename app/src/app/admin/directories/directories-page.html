@@ -1,0 +1,110 @@
+<div class="flex flex-wrap items-start gap-7">
+  <section class="flex min-w-0 flex-[999_1_520px] flex-col gap-4" aria-labelledby="sections-title">
+    <div class="flex flex-wrap items-center justify-between gap-4">
+      <div class="flex flex-col gap-1">
+        <h2 id="sections-title" class="font-display text-2xl font-semibold">{{ 'sections.title' | t }}</h2>
+        <p class="text-sm text-[var(--s3-text-muted)]">{{ 'sections.help' | t }}</p>
+      </div>
+      <button type="button" class="s3-btn s3-btn-primary s3-btn-sm" (click)="openCreate()">
+        <s3-icon name="plus" [size]="18" [stroke]="2.4" />{{ 'sections.new' | t }}
+      </button>
+    </div>
+
+    @if (directories().length === 0) {
+      <p class="s3-surface p-6 text-[var(--s3-text-muted)]">{{ 'sections.none' | t }}</p>
+    } @else {
+      <ul class="flex flex-col gap-3" role="list">
+        @for (dir of directories(); track dir.id) {
+          <li class="s3-surface flex flex-wrap items-center gap-[18px] px-[18px] py-4" [class.ring-2]="form()?.id === dir.id" [class.ring-primary]="form()?.id === dir.id">
+            <span class="s3-section-icon" [attr.data-type]="dir.mediaType"><s3-icon [name]="dir.mediaType" [size]="26" /></span>
+            <span class="flex min-w-0 flex-[1_1_200px] flex-col gap-1">
+              <span class="truncate text-[17px] font-bold">{{ dir.displayName }}</span>
+              <span class="text-[13.5px] text-[var(--s3-text-muted)]">{{ typeLabel(dir.mediaType) }} · {{ library.sectionCount(dir) }}</span>
+            </span>
+            <span class="flex min-w-0 flex-[1_1_220px] flex-col gap-1 text-[13px] text-[var(--s3-text-muted)]">
+              <span class="truncate">{{ 'sections.folder' | t }} <code class="font-mono text-base-content">{{ dir.s3Prefix }}</code></span>
+              <span class="truncate">{{ 'sections.visibleTo' | t }} <span class="font-semibold text-base-content">{{ dir.categoryKey }}</span></span>
+            </span>
+            <span class="flex gap-2">
+              <button type="button" class="s3-btn s3-btn-outline h-[42px]! rounded-[14px]! px-4! text-sm!" (click)="openEdit(dir)">{{ 'action.edit' | t }}</button>
+              <button type="button" class="s3-icon-button h-[42px]! w-[42px]! rounded-[14px]! bg-transparent! text-error ring-1 ring-white/15" [attr.aria-label]="'action.deleteNamed' | t: { name: dir.displayName }" (click)="remove(dir)">
+                <s3-icon name="trash" [size]="18" [stroke]="2" />
+              </button>
+            </span>
+          </li>
+        }
+      </ul>
+    }
+    @if (error() && !form()) {
+      <p role="alert" class="text-sm text-error">{{ error() }}</p>
+    }
+  </section>
+
+  @if (form(); as f) {
+    <aside #panel class="s3-surface flex max-w-[460px] flex-[1_1_360px] flex-col gap-5 p-6 shadow-[0_30px_80px_-40px_var(--color-primary)]" aria-labelledby="edit-title">
+      <div class="flex items-center justify-between">
+        <h2 id="edit-title" class="font-display text-[22px] font-semibold">{{ (f.id == null ? 'sections.newTitle' : 'sections.editTitle') | t }}</h2>
+        <button type="button" class="s3-icon-button h-10! w-10! rounded-xl!" [attr.aria-label]="'action.close' | t" (click)="close()">
+          <s3-icon name="close" [size]="18" [stroke]="2.2" />
+        </button>
+      </div>
+
+      <form class="flex flex-col gap-5" (ngSubmit)="save()">
+        <div class="flex flex-col gap-2">
+          <label for="f-name" class="s3-label">{{ 'sections.name' | t }}</label>
+          <input id="f-name" name="displayName" type="text" class="s3-field" required maxlength="40" [placeholder]="'sections.namePlaceholder' | t"
+            [ngModel]="f.displayName" (ngModelChange)="update({ displayName: $event })" />
+          <span class="s3-hint">{{ 'sections.nameHelp' | t }}</span>
+        </div>
+
+        <fieldset class="flex flex-col gap-2">
+          <legend class="s3-label mb-2">{{ 'sections.content' | t }}</legend>
+          <div class="grid grid-cols-2 gap-2">
+            @for (type of types; track type.id) {
+              <label class="s3-type-option" [class.is-selected]="f.mediaType === type.id">
+                <input type="radio" name="mediaType" class="sr-only" [value]="type.id" [checked]="f.mediaType === type.id" (change)="update({ mediaType: type.id })" />
+                <s3-icon [name]="type.icon" [size]="20" />{{ typeLabel(type.id) }}
+              </label>
+            }
+          </div>
+          <span class="s3-hint">{{ 'sections.contentHelp' | t }}</span>
+        </fieldset>
+
+        <div class="flex flex-col gap-2">
+          <label for="f-folder" class="s3-label">{{ 'sections.folderLabel' | t }}</label>
+          <div class="s3-field flex items-center gap-1 p-0! focus-within:outline-3 focus-within:outline-[color-mix(in_oklab,var(--s3-focus-ring)_55%,transparent)]" [class.opacity-60]="folderLocked()">
+            <span class="pl-4 font-mono text-[15px] text-[var(--s3-text-muted)]">media/</span>
+            <input id="f-folder" name="folder" type="text" class="h-full min-w-0 flex-1 bg-transparent pr-4 font-mono text-[15px] outline-none" required
+              [disabled]="folderLocked()" [placeholder]="'sections.folderPlaceholder' | t" [ngModel]="f.folder" (ngModelChange)="update({ folder: $event })" />
+          </div>
+          <span class="s3-hint">{{ (folderLocked() ? 'sections.folderLocked' : 'sections.folderHelp') | t }}</span>
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <label for="f-key" class="s3-label">{{ 'sections.access' | t }}</label>
+          <input id="f-key" name="categoryKey" type="text" class="s3-field font-mono text-[15px]!" [placeholder]="f.folder || ('sections.folderPlaceholder' | t)"
+            [ngModel]="f.categoryKey" (ngModelChange)="update({ categoryKey: $event })" />
+          <span class="s3-hint">{{ 'sections.accessHelp' | t }}</span>
+        </div>
+
+        @if (error()) {
+          <p role="alert" class="text-sm text-error">{{ error() }}</p>
+        }
+
+        <div class="mt-1 flex justify-end gap-2.5">
+          <button type="button" class="s3-btn s3-btn-quiet h-[50px]! text-[15px]!" (click)="close()">{{ 'action.cancel' | t }}</button>
+          <button type="submit" class="s3-btn s3-btn-primary h-[50px]! text-[15px]!" [disabled]="saving()">
+            @if (saving()) {
+              <span class="loading loading-spinner loading-sm"></span>
+            }
+            {{ 'action.save' | t }}
+          </button>
+        </div>
+      </form>
+    </aside>
+  }
+</div>
+
+<s3-confirm #confirmDelete [heading]="'sections.deleteTitle' | t: { name: deleting()?.displayName ?? '' }" [confirmLabel]="'sections.deleteConfirm' | t" [danger]="true">
+  <p>{{ 'sections.deleteBody' | t }}</p>
+</s3-confirm>

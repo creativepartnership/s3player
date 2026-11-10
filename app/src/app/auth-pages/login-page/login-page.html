@@ -1,0 +1,108 @@
+<div class="relative isolate min-h-screen overflow-hidden flex items-center justify-center p-5">
+  <div
+    class="absolute inset-0 -z-20 grid grid-cols-9 gap-0.5 blur-2xl saturate-150 scale-110 opacity-60"
+    aria-hidden="true"
+  >
+    @for (bg of posterTiles; track $index) {
+      <div class="aspect-2/3" [style.background]="bg"></div>
+    }
+  </div>
+  <div
+    class="absolute inset-0 -z-10 bg-gradient-to-b from-black/50 via-black/70 to-base-100"
+    aria-hidden="true"
+  ></div>
+
+  <header class="absolute inset-x-0 top-0 z-10 flex items-center justify-between px-10 py-7">
+    <div class="flex items-center gap-2.5">
+      <div class="flex h-8.5 w-8.5 items-center justify-center rounded-[9px] bg-gradient-to-br from-[#4f8ff7] to-[#2f6fe0]">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M7 4.5v15l13-7.5-13-7.5Z" /></svg>
+      </div>
+      <span class="text-[19px] font-bold tracking-[-0.02em] text-neutral-100">{{ mediaDb.appTitle() }}</span>
+    </div>
+  </header>
+
+  <div class="card w-full max-w-sm bg-base-100/80 backdrop-blur-md border border-base-content/10 shadow-2xl">
+    <div class="card-body">
+      <h1 class="card-title text-2xl mb-2">
+        {{ awaitingNewPassword() ? 'Set a new password' : 'Sign in' }}
+      </h1>
+
+      @if (error()) {
+        <div role="alert" class="alert alert-error alert-soft mb-2">
+          <span>{{ error() }}</span>
+        </div>
+      }
+
+      @if (!awaitingNewPassword()) {
+        <form (ngSubmit)="submit()" class="flex flex-col gap-3">
+          <fieldset class="fieldset">
+            <legend class="fieldset-legend">Email</legend>
+            <input
+              type="email"
+              name="email"
+              class="input w-full"
+              autocomplete="username"
+              required
+              [(ngModel)]="email"
+            />
+          </fieldset>
+          <fieldset class="fieldset">
+            <legend class="fieldset-legend">Password</legend>
+            <input
+              type="password"
+              name="password"
+              class="input w-full"
+              autocomplete="current-password"
+              required
+              [(ngModel)]="password"
+            />
+          </fieldset>
+          <label class="flex items-center gap-2 text-sm cursor-pointer">
+            <input type="checkbox" class="checkbox checkbox-sm checkbox-primary" [(ngModel)]="remember" name="remember" />
+            Remember me
+          </label>
+          <button type="submit" class="btn btn-primary mt-2" [disabled]="loading()">
+            @if (loading()) {
+              <span class="loading loading-spinner loading-sm"></span>
+            }
+            Sign in
+          </button>
+        </form>
+      } @else {
+        <p class="text-sm text-base-content/70 mb-2">
+          This is your first sign-in. Choose a new password to continue.
+        </p>
+        <form (ngSubmit)="submitNewPassword()" class="flex flex-col gap-3">
+          <fieldset class="fieldset">
+            <legend class="fieldset-legend">New password</legend>
+            <input
+              type="password"
+              name="newPassword"
+              class="input w-full"
+              autocomplete="new-password"
+              required
+              [(ngModel)]="newPassword"
+            />
+          </fieldset>
+          <fieldset class="fieldset">
+            <legend class="fieldset-legend">Confirm new password</legend>
+            <input
+              type="password"
+              name="confirmNewPassword"
+              class="input w-full"
+              autocomplete="new-password"
+              required
+              [(ngModel)]="confirmNewPassword"
+            />
+          </fieldset>
+          <button type="submit" class="btn btn-primary mt-2" [disabled]="loading()">
+            @if (loading()) {
+              <span class="loading loading-spinner loading-sm"></span>
+            }
+            Set password and sign in
+          </button>
+        </form>
+      }
+    </div>
+  </div>
+</div>

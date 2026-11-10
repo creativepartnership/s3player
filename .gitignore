@@ -1,0 +1,30 @@
+node_modules/
+dist/
+.angular/
+*.log
+
+# Deployment-specific configuration: generated or filled in per deployment,
+# never committed (see infra/.env.example, app/src/environments/aws-config.example.ts)
+.env
+.env.*
+!.env.example
+app/src/environments/aws-config.ts
+infra/cdk-outputs.json
+
+# infra (CDK)
+infra/cdk.out/
+infra/cdk.context.json
+
+# Local tooling
+.claude/
+.vscode/settings.json
+
+# OS
+.DS_Store
+
+# Personal notes about your own deployment
+infra/OUTPUTS.md
+
+# Old design-canvas mockups, kept locally only
+design-archive/
+__pycache__/

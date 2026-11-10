@@ -1,0 +1,54 @@
+@if (!library.ready()) {
+  <div class="flex justify-center py-24"><span class="loading loading-spinner loading-lg"></span></div>
+} @else {
+  <div class="s3-page">
+    @if (library.featured().length) {
+      <s3-hero [features]="library.featured()" />
+    }
+
+    @if (library.continueWatching().length) {
+      <s3-shelf [heading]="'home.continueWatching' | t">
+        @for (tile of library.continueWatching(); track tile.id) {
+          <s3-card class="s3-w-wide snap-start" [tile]="tile" shape="wide" />
+        }
+      </s3-shelf>
+    }
+
+    @if (library.recent().length) {
+      <s3-shelf [heading]="'home.newArrivals' | t">
+        @if (arrivalFilters().length) {
+          <div shelf-actions class="flex flex-wrap gap-2" role="group" [attr.aria-label]="'filter.label' | t">
+            @for (option of arrivalFilters(); track option.id) {
+              <button type="button" class="s3-filter" [attr.aria-pressed]="arrivalFilter() === option.id" (click)="arrivalFilter.set(option.id)">
+                {{ option.label }}
+              </button>
+            }
+          </div>
+        }
+        @for (tile of arrivals(); track tile.id; let i = $index) {
+          <s3-card class="snap-start" [class]="width(arrivalShape(tile))" [tile]="tile" [shape]="arrivalShape(tile)" [eager]="i < 6" />
+        }
+      </s3-shelf>
+    }
+
+    @for (row of library.directoryRows(); track row.directory.id) {
+      <s3-shelf [heading]="sectionHeading(row.directory.mediaType, row.directory.displayName)" [link]="['/library', row.directory.id]">
+        @for (tile of row.tiles; track tile.id) {
+          <s3-card class="snap-start" [class]="width(shape(row.directory.mediaType))" [tile]="tile" [shape]="shape(row.directory.mediaType)" />
+        }
+      </s3-shelf>
+    }
+
+    @if (library.directories().length === 0) {
+      <div class="mx-[var(--s3-gutter)] flex flex-col items-start gap-3 s3-surface p-8">
+        <h1 class="font-display text-2xl font-bold">{{ 'home.emptyTitle' | t }}</h1>
+        <p class="text-[var(--s3-text-muted)]">{{ (auth.isAdmin() ? 'home.emptyAdmin' : 'home.emptyUser') | t }}</p>
+        @if (auth.isAdmin()) {
+          <a routerLink="/admin/sections" class="s3-btn s3-btn-primary mt-2">{{ 'home.addSection' | t }}</a>
+        }
+      </div>
+    } @else if (library.recent().length === 0 && library.directoryRows().length === 0) {
+      <div class="mx-[var(--s3-gutter)] s3-surface p-8 text-[var(--s3-text-muted)]">{{ 'home.nothingYet' | t }}</div>
+    }
+  </div>
+}

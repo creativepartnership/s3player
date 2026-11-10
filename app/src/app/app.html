@@ -1,0 +1,6 @@
+@if (showNav()) {
+  <app-nav />
+}
+<main class="s3-main" [class.has-nav]="showNav()">
+  <router-outlet />
+</main>

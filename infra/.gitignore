@@ -1,0 +1,11 @@
+*.js
+!jest.config.js
+*.d.ts
+node_modules
+
+# CDK asset staging directory
+.cdk.staging
+cdk.out
+
+# Ambient module declarations the Lambda needs (the *.d.ts rule above is for tsc output)
+!lambda/**/*.d.ts

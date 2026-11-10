@@ -1,0 +1,36 @@
+<div class="flex flex-wrap items-start gap-6">
+  <section class="s3-surface flex max-w-[620px] flex-[1_1_420px] flex-col gap-[18px] p-6" aria-labelledby="site-name">
+    <div class="flex flex-col gap-1">
+      <h2 id="site-name" class="font-display text-[22px] font-semibold">{{ 'site.name' | t }}</h2>
+      <p class="text-sm text-[var(--s3-text-muted)]">{{ 'site.nameHelp' | t }}</p>
+    </div>
+    <form class="flex flex-col gap-[18px]" (ngSubmit)="save()">
+      <label for="app-title" class="sr-only">{{ 'site.name' | t }}</label>
+      <input id="app-title" name="appTitle" type="text" class="s3-field text-[17px]!" maxlength="60" [ngModel]="appTitle()" (ngModelChange)="appTitle.set($event)" />
+
+      <div aria-hidden="true" class="flex flex-col gap-2.5 rounded-2xl bg-black/25 p-3">
+        <span class="text-xs font-bold tracking-wider text-[var(--s3-text-muted)] uppercase">{{ 'site.preview' | t }}</span>
+        <span class="flex h-[34px] max-w-full items-center gap-2 self-start rounded-t-[10px] bg-base-300 pr-3.5 pl-2.5 text-[13px]">
+          <span class="h-4 w-4 flex-none rounded-[5px] bg-[linear-gradient(135deg,var(--color-primary),var(--color-secondary))]"></span>
+          <span class="truncate">{{ appTitle().trim() || 'My media' }}</span>
+        </span>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-3">
+        <button type="submit" class="s3-btn s3-btn-primary h-[50px]! text-[15px]!" [disabled]="saving()">
+          @if (saving()) {
+            <span class="loading loading-spinner loading-sm"></span>
+          }
+          {{ 'action.save' | t }}
+        </button>
+        @if (saved()) {
+          <span role="status" class="text-sm text-success">{{ 'settings.saved' | t }}</span>
+        }
+        @if (error()) {
+          <span role="alert" class="text-sm text-error">{{ error() }}</span>
+        }
+      </div>
+    </form>
+  </section>
+
+</div>

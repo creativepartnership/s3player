@@ -1,0 +1,64 @@
+@if (!mediaDb.ready() || !item()) {
+  <div class="flex justify-center py-24"><span class="loading loading-spinner loading-lg"></span></div>
+} @else {
+  <div class="flex flex-col gap-10 pb-16">
+    <s3-detail-hero
+      [title]="item()!.title"
+      [poster]="item()!.thumbnailS3Key"
+      [backdrop]="extra().backdrop"
+      [chips]="chips()"
+      [facts]="facts()"
+      [tagline]="info()?.tagline"
+      [overview]="info()?.overview"
+      [backLink]="['/library', directoryId()]"
+      [backLabel]="directory()?.displayName ?? ''"
+    >
+      @if (watch()?.watched) {
+        <span hero-badge class="s3-badge">{{ 'card.watched' | t }}</span>
+      }
+      @if (inProgress()) {
+        <button type="button" class="s3-btn s3-btn-primary" (click)="play()">
+          <s3-icon name="play" [size]="18" />{{ resumeLabel() }}
+        </button>
+        <button type="button" class="s3-btn s3-btn-glass" (click)="play(true)">
+          <s3-icon name="restart" [size]="18" [stroke]="2" />{{ 'action.startOver' | t }}
+        </button>
+      } @else {
+        <button type="button" class="s3-btn s3-btn-primary" (click)="play()">
+          <s3-icon name="play" [size]="18" />{{ 'action.play' | t }}
+        </button>
+      }
+      @if (auth.canDownload()) {
+        <button type="button" class="s3-btn s3-btn-glass" [disabled]="downloading()" (click)="download()">
+          @if (downloading()) {
+            <span class="loading loading-spinner loading-sm"></span>
+          } @else {
+            <s3-icon name="download" [size]="18" [stroke]="2" />
+          }
+          {{ 'action.download' | t }}
+        </button>
+      }
+      <button type="button" class="s3-btn s3-btn-glass" [attr.aria-pressed]="!!watch()?.watched" (click)="toggleWatched()">
+        <s3-icon name="check" [size]="18" [stroke]="2.4" />{{ (watch()?.watched ? 'action.markUnwatched' : 'action.markWatched') | t }}
+      </button>
+    </s3-detail-hero>
+
+    @if (inProgress()) {
+      <div class="-mt-6 max-w-[560px] px-[var(--s3-gutter)]">
+        <div class="h-1.5 overflow-hidden rounded-full bg-white/10">
+          <div class="s3-progress-fill h-full rounded-full" [style.width.%]="(watch()!.positionSeconds / watch()!.durationSeconds) * 100"></div>
+        </div>
+      </div>
+    }
+
+    @if (downloadError()) {
+      <p role="alert" class="s3-warning mx-[var(--s3-gutter)] max-w-[560px] text-sm">{{ 'download.failed' | t }}</p>
+    }
+
+    <s3-cast-row [info]="info()" />
+
+    @if (!info()) {
+      <p class="px-[var(--s3-gutter)] text-[var(--s3-text-muted)]">{{ 'detail.noInfo' | t }}</p>
+    }
+  </div>
+}

@@ -1,0 +1,76 @@
+<dialog #dialog class="s3-dialog w-[min(640px,calc(100%-32px))]!" aria-labelledby="upload-title" (cancel)="onCancel($event)">
+  <div class="flex flex-col gap-[18px]">
+    <div class="flex items-center justify-between gap-4">
+      <h2 id="upload-title" class="font-display text-2xl leading-tight font-bold">{{ 'upload.title' | t: { name: directory().displayName } }}</h2>
+      <button type="button" class="s3-icon-button h-10! w-10! flex-none rounded-xl!" [disabled]="uploading()" [attr.aria-label]="'action.close' | t" (click)="close()">
+        <s3-icon name="close" [size]="18" [stroke]="2.2" />
+      </button>
+    </div>
+
+    @if (error()) {
+      <p role="alert" class="s3-warning text-[14.5px]">{{ error() }}</p>
+    }
+
+    @if (candidateRows().length === 0) {
+      <p class="text-[15px] leading-relaxed text-[var(--s3-text-muted)]">{{ 'upload.help' | t }}</p>
+      <div class="grid grid-cols-2 gap-3 max-sm:grid-cols-1">
+        <label class="s3-pick">
+          <input type="file" multiple class="sr-only" (change)="onFilesSelected($event)" />
+          <s3-icon name="upload" [size]="26" [stroke]="1.8" />
+          <span class="font-bold">{{ 'upload.pickFiles' | t }}</span>
+          <span class="s3-hint text-center">{{ 'upload.pickFilesHelp' | t }}</span>
+        </label>
+        <label class="s3-pick">
+          <input type="file" webkitdirectory multiple class="sr-only" (change)="onFilesSelected($event)" />
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5H9l2 2h8.5A1.5 1.5 0 0 1 21 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5z" /></svg>
+          <span class="font-bold">{{ 'upload.pickFolder' | t }}</span>
+          <span class="s3-hint text-center">{{ 'upload.pickFolderHelp' | t }}</span>
+        </label>
+      </div>
+    } @else {
+      <p class="text-[15px] text-[var(--s3-text-muted)]">{{ 'upload.review' | t }}</p>
+      <ul class="flex max-h-72 flex-col gap-1.5 overflow-y-auto" role="list">
+        @for (row of candidateRows(); track row.candidate.primaryRelativePath) {
+          <li>
+            <label class="flex cursor-pointer items-center gap-3 rounded-[14px] bg-base-100 px-3.5 py-3">
+              <input type="checkbox" class="checkbox checkbox-sm checkbox-primary" [(ngModel)]="row.include" [disabled]="uploading()" />
+              <span class="min-w-0 flex-1 truncate font-semibold">{{ row.candidate.title }}</span>
+              @if (row.candidate.subtitleRelativePaths.length > 0) {
+                <span class="s3-status is-unknown h-[26px]! text-xs!">{{ 'upload.subs' | t: { n: row.candidate.subtitleRelativePaths.length } }}</span>
+              }
+              @if (row.candidate.thumbnailRelativePath) {
+                <span class="s3-status is-unknown h-[26px]! text-xs!">{{ 'upload.cover' | t }}</span>
+              }
+            </label>
+          </li>
+        }
+      </ul>
+      @if (uploading()) {
+        <div class="flex flex-col gap-2" role="status">
+          <div class="flex justify-between gap-3 text-sm">
+            <span class="truncate">{{ progressText() }}</span>
+            <span class="tabular-nums">{{ progress() }}%</span>
+          </div>
+          <div class="h-2 overflow-hidden rounded-full bg-white/10">
+            <div class="s3-progress-fill h-full rounded-full transition-[width]" [style.width.%]="progress()"></div>
+          </div>
+          <span class="s3-hint">{{ 'upload.keepOpen' | t }}</span>
+        </div>
+      }
+    }
+
+    <div class="flex flex-wrap justify-end gap-2.5">
+      <button type="button" class="s3-btn s3-btn-quiet h-[50px]! text-[15px]!" [disabled]="uploading()" (click)="close()">{{ 'action.cancel' | t }}</button>
+      @if (candidateRows().length > 0) {
+        <button type="button" class="s3-btn s3-btn-primary h-[50px]! text-[15px]!" [disabled]="uploading() || selectedCount() === 0" (click)="confirmUpload()">
+          @if (uploading()) {
+            <span class="loading loading-spinner loading-sm"></span>
+          } @else {
+            <s3-icon name="upload" [size]="18" [stroke]="2" />
+          }
+          {{ 'upload.confirm' | t: { n: selectedCount() } }}
+        </button>
+      }
+    </div>
+  </div>
+</dialog>

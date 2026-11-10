@@ -1,0 +1,174 @@
+@if (!service.available) {
+  <p class="s3-surface p-6 text-[var(--s3-text-muted)]">{{ 'users.unavailable' | t }}</p>
+} @else {
+  <div class="flex flex-wrap items-start gap-7">
+    <section class="flex min-w-0 flex-[999_1_520px] flex-col gap-4" aria-labelledby="users-title">
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <div class="flex flex-col gap-1">
+          <h2 id="users-title" class="font-display text-2xl font-semibold">{{ 'users.title' | t }}</h2>
+          <p class="text-sm text-[var(--s3-text-muted)]">{{ 'users.help' | t }}</p>
+        </div>
+        <button type="button" class="s3-btn s3-btn-primary s3-btn-sm" (click)="openInvite()">
+          <s3-icon name="plus" [size]="18" [stroke]="2.4" />{{ 'users.invite' | t }}
+        </button>
+      </div>
+
+      @if (notice()) {
+        <p role="status" class="flex items-center gap-3 rounded-[18px] bg-success/12 px-[18px] py-3.5 text-[14.5px] text-[color-mix(in_oklab,var(--color-success)_60%,white)]">
+          <s3-icon name="check" [size]="20" [stroke]="2.4" />{{ notice() }}
+        </p>
+      }
+      @if (error() && !form()) {
+        <p role="alert" class="s3-warning text-[14.5px]">{{ error() }}</p>
+      }
+
+      @if (loadError()) {
+        <div class="s3-surface flex flex-wrap items-center justify-between gap-3 p-6">
+          <span class="text-[var(--s3-text-muted)]">{{ 'users.loadFailed' | t }}</span>
+          <button type="button" class="s3-btn s3-btn-outline s3-btn-sm" (click)="load()">{{ 'users.retry' | t }}</button>
+        </div>
+      } @else if (users() === null) {
+        <div class="flex justify-center py-12"><span class="loading loading-spinner loading-lg"></span></div>
+      } @else {
+        <ul class="s3-surface flex flex-col p-2" role="list">
+          @for (user of users(); track user.username) {
+            <li class="flex flex-wrap items-center gap-4 rounded-2xl p-3 max-sm:gap-3" [class.bg-white/[0.04]]="form()?.username === user.username">
+              <span aria-hidden="true" class="flex h-[46px] w-[46px] flex-none items-center justify-center rounded-full text-base font-bold text-[#0E0C1D]" [style.background]="tint(user)">
+                {{ initials(user) }}
+              </span>
+              <span class="flex min-w-0 flex-[1_1_220px] flex-col gap-0.5">
+                <span class="truncate text-[15.5px] font-semibold">{{ displayName(user) }}</span>
+                <span class="truncate text-[13px] text-[var(--s3-text-muted)]">{{ user.email }}</span>
+              </span>
+              <span class="flex min-w-0 flex-[1_1_200px] flex-col gap-0.5 text-[13px]">
+                <span class="font-semibold">{{ roleLabel(user) }}</span>
+                <span class="truncate text-[var(--s3-text-muted)]">{{ sectionsLabel(user) }}</span>
+              </span>
+              <span class="s3-status" [class.is-ok]="status(user) === 'active'" [class.is-busy]="status(user) === 'invited'" [class.is-unknown]="status(user) === 'disabled'">
+                {{ statusLabel(user) }}
+              </span>
+              @if (user.role === 'admin') {
+                <span class="w-[104px] flex-none text-center text-[13px] text-[var(--s3-text-muted)]" [title]="'users.adminHint' | t">{{ 'users.managedOutside' | t }}</span>
+              } @else {
+                <button type="button" class="s3-btn s3-btn-outline h-[42px]! w-[104px] flex-none rounded-[14px]! px-4! text-sm!" (click)="openEdit(user)">
+                  {{ 'action.edit' | t }}
+                </button>
+              }
+            </li>
+          }
+        </ul>
+        <p class="text-[13.5px] text-[var(--s3-text-muted)]">{{ 'users.adminNote' | t }}</p>
+      }
+    </section>
+
+    @if (form(); as f) {
+      <aside #panel class="s3-surface flex max-w-[460px] flex-[1_1_360px] flex-col gap-5 p-6 shadow-[0_30px_80px_-40px_var(--color-primary)]" aria-labelledby="user-panel-title">
+        <div class="flex items-center gap-3.5">
+          @if (editing(); as u) {
+            <span aria-hidden="true" class="flex h-[52px] w-[52px] flex-none items-center justify-center rounded-full text-lg font-bold text-[#0E0C1D]" [style.background]="tint(u)">{{ initials(u) }}</span>
+            <span class="flex min-w-0 flex-1 flex-col gap-0.5">
+              <h2 id="user-panel-title" class="font-display truncate text-[22px] font-semibold">{{ displayName(u) }}</h2>
+              <span class="truncate text-[13.5px] text-[var(--s3-text-muted)]">{{ u.email }}@if (since(u)) { · {{ since(u) }}}</span>
+            </span>
+          } @else {
+            <h2 id="user-panel-title" class="font-display flex-1 text-[22px] font-semibold">{{ 'users.inviteTitle' | t }}</h2>
+          }
+          <button type="button" class="s3-icon-button h-10! w-10! flex-none rounded-xl!" [attr.aria-label]="'action.close' | t" (click)="close()">
+            <s3-icon name="close" [size]="18" [stroke]="2.2" />
+          </button>
+        </div>
+
+        <form class="flex flex-col gap-5" (ngSubmit)="save()">
+          @if (!f.username) {
+            <div class="flex flex-col gap-2">
+              <label for="u-email" class="s3-label">{{ 'users.email' | t }}</label>
+              <input id="u-email" name="email" type="email" class="s3-field" required autocomplete="off" [ngModel]="f.email" (ngModelChange)="update({ email: $event })" />
+              <span class="s3-hint">{{ 'users.emailHelp' | t }}</span>
+            </div>
+          }
+          <div class="flex flex-col gap-2">
+            <label for="u-name" class="s3-label">{{ 'users.name' | t }} @if (!f.username) {<span class="font-medium text-[var(--s3-text-muted)]">{{ 'users.optional' | t }}</span>}</label>
+            <input id="u-name" name="name" type="text" class="s3-field" maxlength="80" autocomplete="off" [ngModel]="f.name" (ngModelChange)="update({ name: $event })" />
+          </div>
+
+          <fieldset class="flex flex-col gap-2">
+            <legend class="s3-label mb-2">{{ 'users.canDo' | t }}</legend>
+            @for (role of roles; track role) {
+              <label class="s3-type-option h-auto! items-start! py-3" [class.is-selected]="f.role === role">
+                <input type="radio" name="role" class="mt-1 accent-[var(--color-primary)]" [value]="role" [checked]="f.role === role" (change)="update({ role })" />
+                <span class="flex flex-col gap-0.5">
+                  <span class="font-bold">{{ roleOption(role) }}</span>
+                  <span class="text-[13px] font-normal text-[var(--s3-text-muted)]">{{ roleHelp(role) }}</span>
+                </span>
+              </label>
+            }
+            <label class="s3-type-option h-auto! items-start! py-3" [class.is-selected]="f.canDownload">
+              <input type="checkbox" name="canDownload" class="mt-1 h-[18px] w-[18px] accent-[var(--color-primary)]" [checked]="f.canDownload"
+                (change)="update({ canDownload: $any($event.target).checked })" />
+              <span class="flex flex-col gap-0.5">
+                <span class="font-bold">{{ 'users.canDownload' | t }}</span>
+                <span class="text-[13px] font-normal text-[var(--s3-text-muted)]">{{ 'users.canDownloadHelp' | t }}</span>
+              </span>
+            </label>
+          </fieldset>
+
+          <fieldset class="flex flex-col gap-2">
+            <legend class="s3-label mb-2">{{ 'users.sections' | t }}</legend>
+            @for (section of sections(); track section.id) {
+              <label class="s3-type-option">
+                <input type="checkbox" class="h-[18px] w-[18px] accent-[var(--color-primary)]" [checked]="f.categories.has(section.categoryKey)"
+                  (change)="toggleSection(section.categoryKey, $any($event.target).checked)" />
+                <s3-icon [name]="section.mediaType" [size]="20" class="text-[var(--s3-text-muted)]" />
+                <span class="truncate">{{ section.displayName }}</span>
+              </label>
+            } @empty {
+              <span class="s3-hint">{{ 'users.noSectionsYet' | t }}</span>
+            }
+            @if (f.username) {
+              <span class="s3-hint">{{ 'users.appliesNext' | t }}</span>
+            }
+          </fieldset>
+
+          @if (error()) {
+            <p role="alert" class="text-sm text-error">{{ error() }}</p>
+          }
+
+          <div class="flex justify-end gap-2.5">
+            <button type="button" class="s3-btn s3-btn-quiet h-[50px]! text-[15px]!" (click)="close()">{{ 'action.cancel' | t }}</button>
+            <button type="submit" class="s3-btn s3-btn-primary h-[50px]! text-[15px]!" [disabled]="saving()">
+              @if (saving()) {
+                <span class="loading loading-spinner loading-sm"></span>
+              } @else if (!f.username) {
+                <s3-icon name="mail" [size]="18" [stroke]="2" />
+              }
+              {{ (f.username ? 'action.save' : 'users.send') | t }}
+            </button>
+          </div>
+        </form>
+
+        @if (editing(); as u) {
+          <div class="h-px bg-white/[0.08]"></div>
+          <div class="flex flex-col gap-2.5">
+            <span class="s3-label">{{ 'users.access' | t }}</span>
+            <div class="flex flex-wrap gap-2">
+              @if (status(u) === 'invited') {
+                <button type="button" class="s3-btn s3-btn-outline h-11! rounded-[14px]! px-4! text-sm!" [disabled]="busy()" (click)="resend(u)">{{ 'users.resend' | t }}</button>
+              }
+              <button type="button" class="s3-btn s3-btn-outline h-11! rounded-[14px]! px-4! text-sm!" [disabled]="busy()" (click)="setEnabled(u, !u.enabled)">
+                {{ (u.enabled ? 'users.disable' : 'users.enable') | t }}
+              </button>
+              <button type="button" class="s3-btn h-11! rounded-[14px]! bg-error/12 px-4! text-sm! text-error" [disabled]="busy()" (click)="remove(u)">
+                <s3-icon name="trash" [size]="16" [stroke]="2" />{{ 'users.delete' | t }}
+              </button>
+            </div>
+            <span class="s3-hint">{{ 'users.accessHelp' | t }}</span>
+          </div>
+        }
+      </aside>
+    }
+  </div>
+}
+
+<s3-confirm #confirmDelete [heading]="'users.deleteTitle' | t: { name: editing()?.email ?? '' }" [confirmLabel]="'users.delete' | t" [danger]="true">
+  <p>{{ 'users.deleteBody' | t }}</p>
+</s3-confirm>

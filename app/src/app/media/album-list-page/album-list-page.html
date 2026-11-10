@@ -1,0 +1,15 @@
+<div class="s3-page gap-8!">
+  <div class="flex flex-col items-start gap-5 px-[var(--s3-gutter)]">
+    <a [routerLink]="['/library', directoryId()]" class="s3-back"><s3-icon name="back" [size]="18" [stroke]="2.2" />{{ directory()?.displayName }}</a>
+    <h1 class="font-display text-[34px] leading-tight font-bold tracking-tight sm:text-[44px]">{{ artistName() || ('music.unknownArtist' | t) }}</h1>
+  </div>
+  @if (!library.ready()) {
+    <div class="flex justify-center py-16"><span class="loading loading-spinner loading-lg"></span></div>
+  } @else {
+    <div class="s3-grid px-[var(--s3-gutter)]">
+      @for (tile of albums(); track tile.id) {
+        <s3-card [tile]="tile" shape="square" />
+      }
+    </div>
+  }
+</div>

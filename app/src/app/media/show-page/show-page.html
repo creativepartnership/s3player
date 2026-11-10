@@ -1,0 +1,103 @@
+@if (!mediaDb.ready()) {
+  <div class="flex justify-center py-24"><span class="loading loading-spinner loading-lg"></span></div>
+} @else if (show(); as s) {
+  <div class="flex flex-col gap-10 pb-16">
+    <s3-detail-hero
+      [title]="s.title"
+      [poster]="s.posterS3Key"
+      [backdrop]="s.backdropS3Key"
+      [chips]="chips()"
+      [facts]="facts()"
+      [tagline]="s.info?.tagline"
+      [overview]="s.info?.overview"
+      [backLink]="['/library', directoryId()]"
+      [backLabel]="directory()?.displayName ?? ''"
+    >
+      @if (next()) {
+        <button type="button" class="s3-btn s3-btn-primary" (click)="playNext()">
+          <s3-icon name="play" [size]="18" />{{ playLabel() }}
+        </button>
+      }
+      @if (episodes().length > 1) {
+        <button type="button" class="s3-btn s3-btn-glass" (click)="playRandom()">
+          <s3-icon name="shuffle" [size]="18" [stroke]="2" />{{ 'action.randomEpisode' | t }}
+        </button>
+      }
+    </s3-detail-hero>
+
+    <section class="flex flex-col gap-5 px-[var(--s3-gutter)]" aria-labelledby="episodes-heading">
+      <h2 id="episodes-heading" class="sr-only">{{ 'show.episodes' | t }}</h2>
+      <div class="flex flex-wrap items-center gap-2 border-b border-white/10 pb-3.5">
+        <div role="tablist" class="s3-row flex min-w-0 gap-2 overflow-x-auto" [attr.aria-label]="'show.seasons' | t">
+          @for (season of seasons(); track season) {
+            <button
+              type="button"
+              role="tab"
+              class="s3-season-tab"
+              [attr.aria-selected]="selectedSeason() === season"
+              (click)="selectedSeason.set(season)"
+            >
+              {{ seasonLabel(season) }}
+            </button>
+          }
+        </div>
+        <span class="ml-auto text-sm text-[var(--s3-text-muted)]">
+          {{ 'show.watchedOf' | t: { n: watchedCount(), total: seasonEpisodes().length } }}
+        </span>
+      </div>
+
+      @if (downloadError()) {
+        <p role="alert" class="s3-warning text-sm">{{ 'download.failed' | t }}</p>
+      }
+
+      <ol class="grid grid-cols-[repeat(auto-fill,minmax(min(100%,380px),1fr))] gap-[18px]" role="list">
+        @for (ep of seasonEpisodes(); track ep.id) {
+          <li class="relative">
+            <a [routerLink]="['/play', ep.id]" class="s3-episode group" [class.pr-14]="auth.canDownload()">
+              <s3-art class="s3-card-art relative aspect-video w-[168px] flex-none rounded-[calc(var(--s3-radius-card)*0.7)] max-sm:w-[132px]"
+                [key]="ep.details?.stillS3Key ?? s.backdropS3Key ?? ep.thumbnailS3Key" [title]="episodeTitle(ep)" [showTitle]="false">
+                <span aria-hidden="true" class="absolute inset-0 flex items-center justify-center bg-black/35 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+                  <span class="flex h-11 w-11 items-center justify-center rounded-full bg-white text-black"><s3-icon name="play" [size]="18" /></span>
+                </span>
+                @if (isWatched(ep)) {
+                  <span class="absolute top-2 right-2 flex h-[26px] w-[26px] items-center justify-center rounded-full bg-primary text-primary-content" role="img" [attr.aria-label]="'card.watched' | t">
+                    <s3-icon name="check" [size]="14" [stroke]="3" />
+                  </span>
+                }
+                @if (percent(ep); as pct) {
+                  <span class="absolute inset-x-0 bottom-0 h-[5px] bg-black/45"><span class="s3-progress-fill block h-full" [style.width.%]="pct"></span></span>
+                }
+              </s3-art>
+              <span class="flex min-w-0 flex-1 flex-col gap-1.5 pt-0.5">
+                <span class="text-[13px] font-semibold text-primary">{{ episodeMeta(ep) }}</span>
+                <span class="text-base leading-tight font-semibold">{{ episodeTitle(ep) }}</span>
+                @if (ep.details?.overview; as overview) {
+                  <span class="line-clamp-2 text-sm leading-snug text-[var(--s3-text-muted)]">{{ overview }}</span>
+                }
+              </span>
+            </a>
+            @if (auth.canDownload()) {
+              <button type="button" class="s3-icon-button absolute top-3 right-3 h-10! w-10! rounded-xl!"
+                [disabled]="downloadingId() !== null"
+                [attr.aria-label]="'action.downloadNamed' | t: { name: episodeTitle(ep) }" [title]="'action.download' | t"
+                (click)="download(ep)">
+                @if (downloadingId() === ep.id) {
+                  <span class="loading loading-spinner loading-xs"></span>
+                } @else {
+                  <s3-icon name="download" [size]="18" [stroke]="2" />
+                }
+              </button>
+            }
+          </li>
+        }
+      </ol>
+    </section>
+
+    <s3-cast-row [info]="s.info" />
+  </div>
+} @else {
+  <div class="flex flex-col items-start gap-4 px-[var(--s3-gutter)] py-16">
+    <p class="text-[var(--s3-text-muted)]">{{ 'detail.notFound' | t }}</p>
+    <a [routerLink]="['/library', directoryId()]" class="s3-btn s3-btn-glass">{{ 'nav.back' | t }}</a>
+  </div>
+}

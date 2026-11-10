@@ -1,0 +1,61 @@
+@switch (mode()) {
+  @case ('rail') {
+    <nav class="s3-rail" [attr.aria-label]="'nav.main' | t">
+      <a routerLink="/library" class="s3-logo mb-5" data-tv-skip [attr.aria-label]="mediaDb.appTitle()">
+        <s3-icon name="play" [size]="18" />
+      </a>
+      <div class="flex min-h-0 flex-1 flex-col items-center gap-1.5 overflow-y-auto s3-row">
+        @for (entry of sections(); track entry.link.join('/')) {
+          <a [routerLink]="entry.link" routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: entry.exact }" ariaCurrentWhenActive="page" class="s3-rail-item">
+            <s3-icon [name]="entry.icon" />
+            <span class="line-clamp-2 text-center">{{ entry.label }}</span>
+          </a>
+        }
+      </div>
+      <div class="flex flex-col items-center gap-1.5 pt-3">
+        @for (entry of tools(); track entry.link.join('/')) {
+          <a [routerLink]="entry.link" routerLinkActive="is-active" ariaCurrentWhenActive="page" class="s3-rail-item">
+            <s3-icon [name]="entry.icon" />
+            <span>{{ entry.label }}</span>
+          </a>
+        }
+      </div>
+    </nav>
+  }
+  @case ('bottom') {
+    <nav class="s3-bottom-nav s3-row" [attr.aria-label]="'nav.main' | t">
+      @for (entry of all(); track entry.link.join('/')) {
+        <a [routerLink]="entry.link" routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: entry.exact }" ariaCurrentWhenActive="page" class="s3-bottom-item">
+          <s3-icon [name]="entry.icon" [size]="22" />
+          <span class="max-w-full truncate">{{ entry.label }}</span>
+        </a>
+      }
+    </nav>
+  }
+  @default {
+    <!-- 'top' (Proiezione) and 'glass' (Vetro): over the page, see-through
+         until the page scrolls under it. -->
+    <header class="s3-topbar" [class.is-glass]="mode() === 'glass'" [class.is-scrolled]="scrolled()">
+      <a routerLink="/library" class="flex flex-none items-center gap-2.5 font-display text-lg font-bold tracking-tight">
+        @if (mode() === 'top') {
+          <span class="s3-logo h-[30px]! w-[30px]! rounded-lg! bg-primary!"><s3-icon name="play" [size]="13" /></span>
+        }
+        <span class="max-w-[240px] truncate max-lg:hidden">{{ mediaDb.appTitle() }}</span>
+      </a>
+      <nav class="s3-topbar-links s3-row" [attr.aria-label]="'nav.main' | t">
+        @for (entry of sections(); track entry.link.join('/')) {
+          <a [routerLink]="entry.link" routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: entry.exact }" ariaCurrentWhenActive="page" class="s3-top-item">
+            {{ entry.label }}
+          </a>
+        }
+      </nav>
+      <div class="flex flex-none items-center gap-2.5">
+        @for (entry of tools(); track entry.link.join('/')) {
+          <a [routerLink]="entry.link" routerLinkActive="is-active" class="s3-round-button" [attr.aria-label]="entry.label" [attr.title]="entry.label">
+            <s3-icon [name]="entry.icon" [size]="20" />
+          </a>
+        }
+      </div>
+    </header>
+  }
+}

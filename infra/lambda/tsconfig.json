@@ -1,0 +1,19 @@
+{
+  // Type-check only (`npx tsc -p lambda`) — the bundle itself is built by
+  // esbuild via NodejsFunction in lib/s3player-stack.ts. Kept separate from
+  // the CDK tsconfig because the handler imports shared code from
+  // ../app/src, which the CDK compile shouldn't pull in.
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["es2022", "dom"],
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "types": ["node", "aws-lambda"],
+    "typeRoots": ["../node_modules/@types"]
+  },
+  "include": ["catalog-sync/**/*.ts"]
+}

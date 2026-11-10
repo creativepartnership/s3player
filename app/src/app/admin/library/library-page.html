@@ -1,0 +1,115 @@
+@if (directories().length === 0) {
+  <p class="s3-surface p-6 text-[var(--s3-text-muted)]">{{ 'library.noSections' | t }}</p>
+} @else {
+  <div class="flex flex-col gap-6">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div class="flex flex-wrap gap-2" role="group" [attr.aria-label]="'library.section' | t">
+        @for (dir of directories(); track dir.id) {
+          <button type="button" class="s3-filter" [attr.aria-pressed]="selected()?.id === dir.id" (click)="select(dir)">
+            {{ dir.displayName }} · {{ countLabel(dir) }}
+          </button>
+        }
+      </div>
+      <div class="flex flex-wrap items-center gap-2.5 max-sm:w-full">
+        <label class="flex h-[46px] w-[280px] items-center gap-2.5 rounded-[14px] bg-[var(--s3-surface)] px-3.5 text-[var(--s3-text-muted)] focus-within:outline-3 focus-within:outline-[color-mix(in_oklab,var(--s3-focus-ring)_55%,transparent)] max-sm:flex-1">
+          <s3-icon name="search" [size]="18" [stroke]="2" />
+          <span class="sr-only">{{ 'library.search' | t }}</span>
+          <input type="search" class="min-w-0 flex-1 bg-transparent text-[15px] text-base-content outline-none" [placeholder]="'library.searchPlaceholder' | t"
+            [ngModel]="query()" (ngModelChange)="query.set($event); limit.set(100)" />
+        </label>
+        <button type="button" class="s3-btn s3-btn-outline s3-btn-sm max-sm:w-[46px]! max-sm:px-0!" [disabled]="syncing()" [attr.aria-label]="'library.resync' | t" (click)="resync()">
+          @if (syncing()) {
+            <span class="loading loading-spinner loading-sm"></span>
+          } @else {
+            <s3-icon name="refresh" [size]="18" [stroke]="2" />
+          }
+          <span class="max-sm:hidden">{{ 'library.resync' | t }}</span>
+        </button>
+      </div>
+    </div>
+
+    @if (syncResult(); as result) {
+      <div role="status" class="flex items-center gap-3 rounded-[18px] bg-success/12 px-[18px] py-3.5 text-[14.5px] text-[color-mix(in_oklab,var(--color-success)_60%,white)]">
+        <s3-icon name="check" [size]="20" [stroke]="2.4" />
+        <span>{{ syncMessage(result) }}</span>
+      </div>
+    }
+    @if (error()) {
+      <p role="alert" class="s3-warning text-[14.5px]">{{ error() }}</p>
+    }
+
+    @if (matches().length === 0) {
+      <p class="s3-surface p-6 text-[var(--s3-text-muted)]">{{ (query() ? 'library.noMatches' : 'library.empty') | t }}</p>
+    } @else {
+      <ul class="s3-surface flex flex-col p-2" role="list">
+        @for (row of visible(); track row.item.id) {
+          <li class="flex flex-wrap items-center gap-4 rounded-2xl px-3 py-2.5 max-sm:gap-3" [class.bg-white/[0.04]]="editingId() === row.item.id">
+            <s3-art class="h-[66px] w-11 flex-none rounded-[10px]" [class.w-[66px]]="selected()?.mediaType === 'music' || selected()?.mediaType === 'photo'"
+              [key]="selected()?.mediaType === 'photo' ? row.item.s3Key : row.item.thumbnailS3Key" [title]="row.title" [showTitle]="false" />
+
+            @if (editingId() === row.item.id) {
+              <form class="flex min-w-0 flex-[1_1_320px] items-center gap-2" (ngSubmit)="saveRename(row.item)">
+                <label class="sr-only" [for]="'rename-' + row.item.id">{{ 'library.newTitle' | t }}</label>
+                <input [id]="'rename-' + row.item.id" name="title" type="text" class="s3-field h-[46px]! min-w-0 flex-1 rounded-xl! text-[15.5px]!"
+                  [ngModel]="draft()" (ngModelChange)="draft.set($event)" (keydown.escape)="cancelRename()" />
+                <button type="submit" class="s3-btn s3-btn-primary h-[46px]! rounded-xl! px-4! text-sm!" [disabled]="busyId() === row.item.id">{{ 'action.save' | t }}</button>
+                <button type="button" class="s3-btn s3-btn-quiet h-[46px]! rounded-xl! px-3.5! text-sm!" (click)="cancelRename()">{{ 'action.cancel' | t }}</button>
+              </form>
+            } @else {
+              <span class="flex min-w-0 flex-[1_1_240px] flex-col gap-1">
+                <span class="truncate text-[15.5px] font-semibold">
+                  @if (row.prefix) {
+                    <span class="text-[var(--s3-text-muted)]">{{ row.prefix }} · </span>
+                  }
+                  {{ row.title }}
+                </span>
+                <span class="truncate font-mono text-[12.5px] text-[var(--s3-text-muted)]" [title]="row.item.s3Key">{{ row.file }}</span>
+              </span>
+              @if (isVideo()) {
+                @if (status(row.item); as s) {
+                  <span class="s3-status" [class.is-ok]="s === 'ok'" [class.is-busy]="s === 'checking'" [class.is-warn]="s === 'unsupported' || s === 'tooLarge' || s === 'attention'"
+                    [class.is-unknown]="s === 'unchecked'" [title]="statusHint(s) | t">
+                    @if (s === 'checking') {
+                      <span class="loading loading-spinner loading-xs"></span>
+                    }
+                    {{ statusKey(s) | t }}
+                  </span>
+                } @else {
+                  <span class="s3-status is-unknown w-24 animate-pulse" aria-hidden="true"></span>
+                }
+              }
+              <span class="flex flex-none gap-1.5">
+                <button type="button" class="s3-icon-button h-[42px]! w-[42px]! rounded-xl! bg-white/[0.06]!" [attr.aria-label]="'library.renameNamed' | t: { name: row.title }" (click)="startRename(row)">
+                  <s3-icon name="edit" [size]="18" [stroke]="2" />
+                </button>
+                <button type="button" class="s3-icon-button h-[42px]! w-[42px]! rounded-xl! bg-error/10! text-error" [disabled]="busyId() === row.item.id"
+                  [attr.aria-label]="'action.deleteNamed' | t: { name: row.title }" (click)="remove(row.item)">
+                  @if (busyId() === row.item.id) {
+                    <span class="loading loading-spinner loading-xs"></span>
+                  } @else {
+                    <s3-icon name="trash" [size]="18" [stroke]="2" />
+                  }
+                </button>
+              </span>
+            }
+          </li>
+        }
+      </ul>
+      @if (matches().length > visible().length) {
+        <button type="button" class="s3-btn s3-btn-outline s3-btn-sm self-center" (click)="limit.set(limit() + 100)">
+          {{ 'library.showMore' | t: { n: matches().length - visible().length } }}
+        </button>
+      }
+    }
+    <p class="text-[13.5px] text-[var(--s3-text-muted)]">{{ 'library.autoHelp' | t }}</p>
+  </div>
+}
+
+<s3-confirm #confirmDelete [heading]="'library.deleteTitle' | t: { name: pendingDelete()?.item?.title ?? '' }" [confirmLabel]="'library.deleteConfirm' | t" [danger]="true">
+  @if (pendingDelete(); as p) {
+    <div class="s3-warning flex flex-col gap-1.5">
+      <span class="font-bold">{{ 'library.deleteWarning' | t }}</span>
+      <span>{{ deleteSummary(p) }}</span>
+    </div>
+  }
+</s3-confirm>

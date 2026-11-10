@@ -1,0 +1,41 @@
+<div class="s3-page gap-8!">
+  <header class="flex flex-wrap items-end justify-between gap-4 px-[var(--s3-gutter)]">
+    <div class="flex min-w-0 flex-col gap-1">
+      <h1 class="font-display text-[34px] leading-tight font-bold tracking-tight sm:text-[44px]">{{ directory()?.displayName }}</h1>
+      @if (library.ready()) {
+        <span class="text-[var(--s3-text-muted)]">{{ countLabel() }}</span>
+      }
+    </div>
+    <div class="flex flex-wrap items-center gap-2">
+      <div class="flex gap-2" role="group" [attr.aria-label]="'sort.label' | t">
+        <button type="button" class="s3-filter" [attr.aria-pressed]="sort() === 'recent'" (click)="setSort('recent')">{{ 'sort.recent' | t }}</button>
+        <button type="button" class="s3-filter" [attr.aria-pressed]="sort() === 'title'" (click)="setSort('title')">{{ 'sort.title' | t }}</button>
+      </div>
+      @if (auth.canUpload() && directory(); as dir) {
+        <button type="button" class="s3-btn s3-btn-glass h-10! rounded-full! px-4! text-sm!" (click)="uploadDialog.open()">
+          <s3-icon name="upload" [size]="17" [stroke]="2" />{{ 'action.upload' | t }}
+        </button>
+        <app-upload-dialog #uploadDialog [directory]="dir" (uploaded)="onUploaded()" />
+      }
+    </div>
+  </header>
+
+  @if (awaitingCatalog()) {
+    <div role="status" class="mx-[var(--s3-gutter)] flex items-center gap-3 s3-surface px-5 py-4 text-sm">
+      <span class="loading loading-spinner loading-sm text-primary"></span>
+      <span>{{ 'upload.awaitingCatalog' | t }}</span>
+    </div>
+  }
+
+  @if (!library.ready()) {
+    <div class="flex justify-center py-16"><span class="loading loading-spinner loading-lg"></span></div>
+  } @else if (tiles().length === 0) {
+    <p class="px-[var(--s3-gutter)] text-[var(--s3-text-muted)]">{{ 'section.empty' | t }}</p>
+  } @else {
+    <div class="s3-grid px-[var(--s3-gutter)]" [class.s3-photo-grid]="directory()?.mediaType === 'photo'">
+      @for (tile of tiles(); track tile.id; let i = $index) {
+        <s3-card [tile]="tile" [shape]="shape()" [eager]="i < 12" />
+      }
+    </div>
+  }
+</div>

@@ -1,0 +1,19 @@
+<div class="s3-page gap-7!">
+<div class="flex flex-col gap-7 px-[var(--s3-gutter)]">
+  <header class="flex flex-col gap-[18px]">
+    <h1 class="font-display text-[34px] leading-tight font-bold tracking-tight sm:text-[44px]">{{ 'admin.title' | t }}</h1>
+    <nav class="s3-admin-tabs" [attr.aria-label]="'admin.title' | t">
+      <a routerLink="sections" routerLinkActive="is-active" ariaCurrentWhenActive="page" class="s3-season-tab">{{ 'admin.sections' | t }}</a>
+      <a routerLink="library" routerLinkActive="is-active" ariaCurrentWhenActive="page" class="s3-season-tab">{{ 'admin.library' | t }}</a>
+      <a routerLink="users" routerLinkActive="is-active" ariaCurrentWhenActive="page" class="s3-season-tab">{{ 'admin.users' | t }}</a>
+      <a routerLink="site" routerLinkActive="is-active" ariaCurrentWhenActive="page" class="s3-season-tab">{{ 'admin.site' | t }}</a>
+    </nav>
+  </header>
+
+  @if (!mediaDb.ready()) {
+    <div class="flex justify-center py-16"><span class="loading loading-spinner loading-lg"></span></div>
+  } @else {
+    <router-outlet />
+  }
+</div>
+</div>

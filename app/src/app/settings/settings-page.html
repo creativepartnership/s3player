@@ -1,0 +1,169 @@
+<div class="mx-auto flex max-w-[1240px] flex-wrap gap-10 px-6 py-10 sm:px-8">
+  <nav class="flex max-w-[260px] flex-[1_1_220px] flex-col gap-1.5" [attr.aria-label]="'settings.title' | t">
+    <h1 class="font-display mb-4 text-3xl font-bold tracking-tight">{{ 'settings.title' | t }}</h1>
+    <a routerLink="/settings" class="flex h-12 items-center rounded-[var(--radius-field)] bg-primary/15 px-4 font-bold text-primary">
+      {{ 'settings.appearance' | t }}
+    </a>
+  </nav>
+
+  <div class="flex min-w-0 flex-[999_1_560px] flex-col gap-10">
+    <section class="flex flex-col gap-4" aria-labelledby="theme-heading">
+      <div class="flex flex-col gap-1.5">
+        <h2 id="theme-heading" class="font-display text-2xl font-bold">{{ 'settings.theme' | t }}</h2>
+        <p class="text-[var(--s3-text-muted)]">{{ 'settings.themeHelp' | t }}</p>
+      </div>
+
+      <div class="grid grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-4">
+        @for (def of theme.themes; track def.id) {
+          <button
+            type="button"
+            class="flex cursor-pointer flex-col overflow-hidden rounded-[20px] bg-[var(--s3-surface)] text-left transition-shadow"
+            [class.ring-3]="theme.theme() === def.id"
+            [class.ring-primary]="theme.theme() === def.id"
+            [class.ring-1]="theme.theme() !== def.id"
+            [class.ring-white/15]="theme.theme() !== def.id"
+            [attr.aria-pressed]="theme.theme() === def.id"
+            (click)="theme.set(def.id)"
+          >
+            <div aria-hidden="true" class="relative h-[150px] overflow-hidden">
+              @switch (def.id) {
+                @case ('proiezione') {
+                  <div class="absolute inset-0 bg-[#0A0B0F]"></div>
+                  <div class="absolute inset-x-0 top-0 bottom-[50px] bg-[linear-gradient(180deg,#1B1440,#3B2A6E_50%,#2F7C8C)]"></div>
+                  <div class="absolute top-2.5 right-3 left-3 flex items-center gap-1.5">
+                    <span class="h-3.5 w-3.5 rounded bg-[#F2A93B]"></span><span class="h-1.5 w-10 rounded bg-white/70"></span><span class="h-1.5 w-5 rounded bg-white/35"></span><span class="h-1.5 w-5 rounded bg-white/35"></span>
+                  </div>
+                  <div class="absolute top-14 left-3 h-2.5 w-24 rounded bg-white"></div>
+                  <div class="absolute top-[72px] left-3 h-3 w-9 rounded-full bg-[#F2A93B]"></div>
+                  <div class="absolute right-3 bottom-2.5 left-3 flex gap-1.5">
+                    <span class="h-[34px] flex-1 rounded bg-[#5F8C8E]"></span><span class="h-[34px] flex-1 rounded bg-[#A3341F]"></span><span class="h-[34px] flex-1 rounded bg-[#1F4E7A]"></span><span class="h-[34px] flex-1 rounded bg-[#7A5A8C]"></span>
+                  </div>
+                }
+                @case ('aurora') {
+                  <div class="absolute inset-0 flex bg-[#0E0C1D]">
+                    <div class="flex w-[22px] flex-none flex-col items-center gap-[7px] bg-[#0B0A17] pt-2.5">
+                      <span class="h-3 w-3 rounded bg-[linear-gradient(135deg,#5EE6F0,#FF7AB6)]"></span><span class="h-2.5 w-2.5 rounded-sm bg-[#5EE6F0]/50"></span><span class="h-2.5 w-2.5 rounded-sm bg-white/20"></span><span class="h-2.5 w-2.5 rounded-sm bg-white/20"></span>
+                    </div>
+                    <div class="flex flex-1 flex-col gap-2 p-2.5">
+                      <div class="h-[72px] rounded-[10px] bg-[linear-gradient(120deg,#2B0F12,#7A2418_40%,#E0612E_75%,#F7B064)] shadow-[0_10px_20px_-10px_rgba(240,110,60,0.8)]"></div>
+                      <div class="flex gap-1.5">
+                        <span class="h-11 flex-1 rounded-md bg-[#5F8C8E]"></span><span class="h-11 flex-1 rounded-md bg-[#2E5C80]"></span><span class="h-11 flex-1 rounded-md bg-[#7A5A8C]"></span><span class="h-11 flex-1 rounded-md bg-[#B04A5F]"></span>
+                      </div>
+                    </div>
+                  </div>
+                }
+                @case ('vetro') {
+                  <div class="absolute inset-0 bg-black"></div>
+                  <div class="absolute inset-x-0 top-0 bottom-[34px] bg-[linear-gradient(180deg,#0A0714,#2A1D3F_30%,#7A5A8C_60%,#E3B87B)]"></div>
+                  <div class="absolute top-[18px] left-[52%] h-[30px] w-[30px] rounded-full bg-[#F6E7C8]"></div>
+                  <div class="absolute top-2 left-1/2 flex -translate-x-1/2 gap-[3px] rounded-full bg-white/20 p-[3px]">
+                    <span class="h-[7px] w-[22px] rounded-full bg-white"></span><span class="h-[7px] w-[18px] rounded-full bg-white/30"></span><span class="h-[7px] w-[18px] rounded-full bg-white/30"></span>
+                  </div>
+                  <div class="absolute top-16 left-3 h-2.5 w-20 rounded bg-white"></div>
+                  <div class="absolute right-3 bottom-2.5 left-3 flex items-end gap-1.5">
+                    <span class="h-[34px] flex-[1.4] rounded-md bg-[#2E5C80] ring-2 ring-white"></span><span class="h-[26px] flex-1 rounded-md bg-[#3B2A6E]"></span><span class="h-[26px] flex-1 rounded-md bg-[#5C5A55]"></span>
+                  </div>
+                }
+              }
+            </div>
+            <div class="flex flex-col gap-1 px-[18px] pt-4 pb-[18px]">
+              <span class="flex items-center justify-between text-[17px] font-bold">
+                {{ def.name }}
+                @if (theme.theme() === def.id) {
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-primary" role="img" [attr.aria-label]="'settings.selected' | t">
+                    <path d="M5 12.5l4.5 4.5L19 7.5" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                }
+              </span>
+              <span class="text-sm text-[var(--s3-text-muted)]">{{ description(def.id) | t }}</span>
+            </div>
+          </button>
+        }
+      </div>
+
+      <div class="flex items-center gap-3 rounded-2xl bg-[var(--s3-surface)] px-4 py-3.5 text-sm text-[var(--s3-text-muted)]">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <rect x="3" y="4" width="18" height="12" rx="2" /><path d="M8 20h8M12 16v4" stroke-linecap="round" />
+        </svg>
+        <span>{{ 'settings.perDevice' | t }}</span>
+      </div>
+
+      @if (auth.isAdmin()) {
+        <label class="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-dashed border-white/20 px-[18px] py-4">
+          <span class="flex flex-col gap-1">
+            <span class="flex items-center gap-2.5 font-bold">
+              {{ 'settings.defaultTheme' | t }}
+              <span class="rounded-md bg-primary/15 px-2 py-0.5 text-[11px] font-bold tracking-wider text-primary uppercase">{{ 'settings.adminOnly' | t }}</span>
+            </span>
+            <span class="text-sm text-[var(--s3-text-muted)]">{{ 'settings.defaultThemeHelp' | t }}</span>
+            @if (defaultSaved()) {
+              <span class="text-sm text-success" role="status">{{ 'settings.saved' | t }}</span>
+            }
+            @if (defaultError()) {
+              <span class="text-sm text-error" role="alert">{{ 'settings.saveFailed' | t }}</span>
+            }
+          </span>
+          <select
+            class="select w-auto font-semibold"
+            [value]="theme.defaultTheme()"
+            [disabled]="savingDefault()"
+            (change)="setDefault($any($event.target).value)"
+          >
+            @for (def of theme.themes; track def.id) {
+              <option [value]="def.id" [selected]="theme.defaultTheme() === def.id">{{ def.name }}</option>
+            }
+          </select>
+        </label>
+      }
+    </section>
+
+    <section class="flex flex-col gap-4" aria-labelledby="language-heading">
+      <h2 id="language-heading" class="font-display text-2xl font-bold">{{ 'settings.language' | t }}</h2>
+      <div role="radiogroup" [attr.aria-labelledby]="'language-heading'" class="flex self-start rounded-2xl bg-[var(--s3-surface)] p-1.5">
+        @for (lang of languages; track lang.id) {
+          <button
+            type="button"
+            role="radio"
+            class="h-12 cursor-pointer rounded-xl px-6 font-bold transition-colors"
+            [class.bg-primary]="i18n.language() === lang.id"
+            [class.text-primary-content]="i18n.language() === lang.id"
+            [class.text-[var(--s3-text-muted)]]="i18n.language() !== lang.id"
+            [attr.aria-checked]="i18n.language() === lang.id"
+            (click)="setLanguage(lang.id)"
+          >
+            {{ lang.label }}
+          </button>
+        }
+      </div>
+    </section>
+
+    @if (auth.isAdmin()) {
+      <a routerLink="/admin" class="flex items-center justify-between gap-4 rounded-2xl bg-[var(--s3-surface)] px-[18px] py-4 hover:bg-white/10">
+        <span class="flex items-center gap-3">
+          <span class="flex h-11 w-11 flex-none items-center justify-center rounded-full bg-primary/15 text-primary"><s3-icon name="admin" [size]="20" /></span>
+          <span class="flex flex-col">
+            <span class="font-semibold">{{ 'nav.admin' | t }}</span>
+            <span class="text-sm text-[var(--s3-text-muted)]">{{ 'settings.adminHelp' | t }}</span>
+          </span>
+        </span>
+        <s3-icon name="forward" [size]="20" [stroke]="2" />
+      </a>
+    }
+
+    <section class="flex flex-col gap-4" aria-labelledby="account-heading">
+      <h2 id="account-heading" class="font-display text-2xl font-bold">{{ 'settings.account' | t }}</h2>
+      <div class="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-[var(--s3-surface)] px-[18px] py-4">
+        <span class="flex min-w-0 items-center gap-3">
+          <span class="flex h-11 w-11 flex-none items-center justify-center rounded-full bg-primary/15 text-primary"><s3-icon name="user" [size]="20" /></span>
+          <span class="flex min-w-0 flex-col">
+            <span class="truncate font-semibold">{{ auth.email() || ('settings.signedIn' | t) }}</span>
+            <span class="text-sm text-[var(--s3-text-muted)]">{{ (auth.isAdmin() ? 'settings.roleAdmin' : auth.isUploader() ? 'settings.roleUploader' : 'settings.roleUser') | t }}</span>
+          </span>
+        </span>
+        <button type="button" class="s3-btn s3-btn-glass h-11! text-[15px]!" (click)="signOut()">
+          <s3-icon name="logout" [size]="18" [stroke]="2" />{{ 'nav.signOut' | t }}
+        </button>
+      </div>
+    </section>
+  </div>
+</div>
